@@ -1,0 +1,74 @@
+{
+    "529681167314714624": {
+        "nivel": "4",
+        "nome_vip": "☣️ ﹒ Gen X",
+        "data_expira": "2026-04-10 00:44:46",
+        "estado": "CONGELADO",
+        "checklist": {
+            "ticket": true
+        }
+    },
+    "542016630625009667": {
+        "nivel": "4",
+        "nome_vip": "☣️ ﹒ Gen X",
+        "data_expira": "2026-05-10 19:52:35",
+        "estado": "ATIVO",
+        "checklist": {
+            "ticket": true
+        }
+    },
+    "336694542906556417": {
+        "nivel": "4",
+        "nome_vip": "☣️ ﹒ Gen X",
+        "data_expira": "2026-04-10 23:18:49",
+        "estado": "CONGELADO",
+        "checklist": {
+            "ticket": true
+        }
+    },
+    "1066579789240074321": {
+        "nivel": "4",
+        "nome_vip": "☣️ ﹒ Gen X",
+        "data_expira": "2026-04-10 23:23:17",
+        "estado": "CONGELADO",
+        "checklist": {
+            "ticket": true
+        }
+    },
+    "1470101436737130740": {
+        "nivel": "4",
+        "nome_vip": "☣️ ﹒ Gen X",
+        "data_expira": "2026-04-10 23:23:53",
+        "estado": "CONGELADO",
+        "checklist": {
+            "ticket": true
+        }
+    },
+    "524647879160365056": {
+        "nivel": "3",
+        "nome_vip": "🌌 ﹒ Gen 3",
+        "data_expira": "2026-04-10 23:24:21",
+        "estado": "CONGELADO",
+        "checklist": {
+            "ticket": true
+        }
+    },
+    "477334703653781505": {
+        "nivel": "1",
+        "nome_vip": "🧬 ﹒ Gen 1",
+        "data_expira": "2026-04-10 23:24:53",
+        "estado": "CONGELADO",
+        "checklist": {
+            "ticket": true
+        }
+    },
+    "425086887250755594": {
+        "nivel": "3",
+        "nome_vip": "🌌 ﹒ Gen 3",
+        "data_expira": "2026-04-10 23:25:22",
+        "estado": "CONGELADO",
+        "checklist": {
+            "ticket": true
+        }
+    }
+}
