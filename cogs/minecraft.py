@@ -39,11 +39,10 @@ class SistemasUnificados(commands.Cog):
 
         # URLs das skins
         head_skin = f"https://mc-heads.net/avatar/{uuid}/100"
-        body_skin = f"https://mc-heads.net/body/{uuid}/400"
+        body_skin_Lado = f"https://mc-heads.net/body/{uuid}/400"
+        Full_body_front = f"https://mc-heads.net/player/{uuid}/400"
         full_skin = f"https://mc-heads.net/skin/{uuid}"
-        legacy_skin = f"https://mc-heads.net/body/{uuid}?legacy"
-        skin_3d = f"https://crafatar.com/renders/body/{uuid}?overlay"  # 3D frontal
-        optifine_cape = f"https://optifine.net/capes?uuid={uuid}"
+        
 
         # Embed
         embed = discord.Embed(
@@ -55,15 +54,12 @@ class SistemasUnificados(commands.Cog):
         embed.set_image(url=body_skin)
         embed.add_field(name="🆔 UUID", value=f"`{uuid}`", inline=False)
         embed.add_field(name="🔗 NameMC", value=f"[Clique aqui](https://namemc.com/profile/{nick})", inline=False)
-        embed.add_field(name="🕰 Legacy Skin", value=f"[Ver skin antiga]({legacy_skin})", inline=True)
-        embed.add_field(name="🖼 Skin 3D", value=f"[Visualizar]({skin_3d})", inline=True)
         embed.set_footer(text="Sistema de skins Minecraft")
 
         # Botões interativos
         view = discord.ui.View()
-        view.add_item(discord.ui.Button(label="Download Skin", url=full_skin, style=discord.ButtonStyle.green))
+        view.add_item(discord.ui.Button(label="Download Skin", url=f"https://mc-heads.net/download/{uuid}", style=discord.ButtonStyle.green))
         view.add_item(discord.ui.Button(label="Ver NameMC", url=f"https://namemc.com/profile/{nick}", style=discord.ButtonStyle.gray))
-        view.add_item(discord.ui.Button(label="Optifine Cape", url=optifine_cape, style=discord.ButtonStyle.blurple))
 
         await interaction.followup.send(embed=embed, view=view)
 
