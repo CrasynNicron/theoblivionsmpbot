@@ -82,7 +82,7 @@ class TopPaginationView(discord.ui.View):
         for i, (uid, data) in enumerate(slice_data, start + 1):
             user = self.cog.bot.get_user(int(uid))
             nome = user.display_name if user else f"Sobrevivente ({uid})"
-            prestigio = f" [S{data.get('prestigio')}]" if data.get('prestigio', 0) > 0 else ""
+            prestigio = f" [S{data.get('prestigio', 0)}]" if data.get('prestigio', 0) > 0 else ""
             medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"**#{i}**"
             lb += f"{medal} **{nome}**{prestigio} — `LVL {data.get('nivel', 1)}`\n└ `{int(data.get('xp', 0))}/{data.get('nivel', 1)*500} XP`\n\n"
         
@@ -139,12 +139,11 @@ class Players(commands.Cog):
         if ID_CARGO_PLAYER not in [r.id for r in alvo.roles]:
             return await it.response.send_message("❌ Não é um Jogador.", ephemeral=True)
 
-        self.dados = self.carregar_dados(self.db_path) # Recarrega para pegar XP atualizado pelo xp.py
+        self.dados = self.carregar_dados(self.db_path)
         p = self.get_player(alvo.id)
         eh_vip, mult_base, extra_v = self.check_vip_status(alvo)
         v_max = 6 + extra_v
         
-        # Multiplicador com Prestígio
         mult_final = float(mult_base) + (p.get("prestigio", 0) * 0.5)
         boost_status = f"{mult_final}x"
         
@@ -191,15 +190,5 @@ class Players(commands.Cog):
         pos = next((i for i, (u, _) in enumerate(sort, 1) if u == str(it.user.id)), "N/A")
         await it.response.send_message(embed=TopPaginationView(self, sort, pos, len(sort)).create_embed(), view=TopPaginationView(self, sort, pos, len(sort)))
 
-    @app_commands.command(name="badge", description="[STAFF] Gerir insígnias.")
-    @app_commands.checks.has_permissions(administrator=True)
-    async def badge(self, it: discord.Interaction, jogador: discord.Member, emoji: str, acao: str, descricao: str = None):
-        p = self.get_player(jogador.id)
-        if acao.lower() == "add":
-            if emoji not in p["badges"]: p["badges"].append(emoji)
-            if descricao: self.badges_desc[emoji] = descricao
-        else:
-            if emoji in p["badges"]: p["badges"].remove(emoji)
-        self.guardar_dados(); await it.response.send_message(f"✅ Atualizado!", ephemeral=True)
-
-async def setup(bot): await bot.add_cog(Players(bot))
+async def setup(bot):
+    await bot.add_cog(Players(bot))
