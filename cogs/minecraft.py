@@ -2,19 +2,36 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import aiohttp
+import json
+import os
 
-# Lista começa com alguns, mas vai crescer sozinha!
-nick_cache = ["PipocaMaia", "Notch", "jeb_", "Dinnerbone", "Technoblade", "Dream"]
+PATH_NICKS = "nicks.json"
 
 class SistemasUnificados(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.nick_cache = self.carregar_nicks()
 
-    # Função de autocomplete que lê a lista dinâmica
+    def carregar_nicks(self):
+        """Carrega os nicks do ficheiro JSON para o autocomplete persistente."""
+        if not os.path.exists(PATH_NICKS):
+            return ["PipocaMaia", "Notch", "jeb_", "Dinnerbone"]
+        try:
+            with open(PATH_NICKS, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            return ["PipocaMaia", "Notch", "jeb_"]
+
+    def guardar_nicks(self):
+        """Guarda a lista atualizada no JSON."""
+        with open(PATH_NICKS, "w", encoding="utf-8") as f:
+            json.dump(self.nick_cache, f, indent=4)
+
     async def nick_autocomplete(self, interaction: discord.Interaction, current: str):
+        """Sugere nicks baseados no histórico de pesquisas."""
         return [
             app_commands.Choice(name=nick, value=nick)
-            for nick in nick_cache if current.lower() in nick.lower()
+            for nick in self.nick_cache if current.lower() in nick.lower()
         ][:25]
 
     @app_commands.command(
@@ -26,7 +43,7 @@ class SistemasUnificados(commands.Cog):
     async def minecraft_skin(self, interaction: discord.Interaction, nick: str):
         await interaction.response.defer()
 
-        # 1. Procurar UUID na Mojang
+        # 1. Procurar UUID na Mojang (Necessário para as APIs de skin)
         mojang_api = f"https://api.mojang.com/users/profiles/minecraft/{nick}"
         async with aiohttp.ClientSession() as session:
             async with session.get(mojang_api) as resp:
@@ -35,24 +52,25 @@ class SistemasUnificados(commands.Cog):
                 
                 data = await resp.json()
                 uuid = data["id"]
-                nome_correto = data["name"] # Pega o nick com as letras maiúsculas corretas
+                nome_correto = data["name"]
 
-        # --- SISTEMA DE CACHE DINÂMICO ---
-        # Se o nick não estiver na lista, adiciona-o para aparecer no próximo autocomplete!
-        if nome_correto not in nick_cache:
-            nick_cache.append(nome_correto)
-            # Mantém a lista limpa (apaga os mais antigos se passar de 100)
-            if len(nick_cache) > 100: nick_cache.pop(0)
+        # --- ATUALIZAÇÃO DO CACHE ---
+        if nome_correto not in self.nick_cache:
+            self.nick_cache.append(nome_correto)
+            if len(self.nick_cache) > 200: self.nick_cache.pop(0)
+            self.guardar_nicks()
 
-        # 2. URLs de alta qualidade (Render 3D)
+        # 2. Configuração das Imagens (Render 3D de Lado)
         head_url = f"https://mc-heads.net/avatar/{uuid}/100"
-        # Usamos o 'player' em vez de 'body' para um render 3D mais bonito
-        body_render = f"https://mc-heads.net/player/{uuid}/400"
+        body_render = f"https://mc-heads.net/body/{uuid}/400" # Este é o render de lado
+        
+        # Link do NameMC
+        namemc_url = f"https://namemc.com/profile/{nome_correto}"
         
         embed = discord.Embed(
             title=f"👤 Perfil de {nome_correto}",
-            url=f"https://namemc.com/profile/{nome_correto}",
-            color=0x2f3136 # Cor escura elegante
+            url=namemc_url, # Clicar no título abre o NameMC
+            color=0x2f3136
         )
         
         embed.set_thumbnail(url=head_url)
@@ -60,16 +78,17 @@ class SistemasUnificados(commands.Cog):
         
         embed.add_field(name="🔗 Nick Original", value=f"`{nome_correto}`", inline=True)
         embed.add_field(name="🆔 UUID", value=f"`{uuid}`", inline=True)
+        embed.add_field(name="🌐 Ver no NameMC", value=f"[Clique aqui para abrir]({namemc_url})", inline=False)
         
-        # Detalhe extra: Link direto para a skin plana (textura)
-        embed.add_field(name="🖼️ Textura", value=f"[Ver Skin Plana](https://mc-heads.net/skin/{uuid})", inline=False)
-        
-        embed.set_footer(text="The Oblivion SMP", icon_url="https://cdn.discordapp.com/icons/1133021777547767949/a_6714d22f0fa7b8e0faf02468456ae843.gif?size=2048.gif")
+        embed.set_footer(
+            text="The Oblivion SMP", 
+            icon_url="https://cdn.discordapp.com/icons/1133021777547767949/a_6714d22f0fa7b8e0faf02468456ae843.gif?size=2048.gif"
+        )
 
-        # 3. Botões interativos
+        # 3. Botões interativos com link para NameMC
         view = discord.ui.View()
+        view.add_item(discord.ui.Button(label="Ver no NameMC", url=namemc_url, style=discord.ButtonStyle.link, emoji="🌐"))
         view.add_item(discord.ui.Button(label="Baixar Skin", url=f"https://mc-heads.net/download/{uuid}", style=discord.ButtonStyle.link, emoji="📥"))
-        view.add_item(discord.ui.Button(label="Ver no NameMC", url=f"https://namemc.com/profile/{nome_correto}", style=discord.ButtonStyle.link, emoji="🌐"))
 
         await interaction.followup.send(embed=embed, view=view)
 
