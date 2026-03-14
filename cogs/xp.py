@@ -11,21 +11,21 @@ PATH_PLAYERS = "players.json"
 COR_XP = 0x9b59b6
 ID_CARGO_PLAYER = 1337596948940722306
 
-CARGOS_VIPS = {
+CARGOS_VIPS_XP = {
     "GEN 1": 1440494650728255538,
     "GEN 2": 1440494651147685949,
     "GEN 3": 1440494652166901822,
     "GEN X": 1477066277251186852
 }
 
-def get_rank_name(nivel):
+def pegar_rank(nivel):
     if nivel < 10: return "🌱 Recruta"
     if nivel < 25: return "🏹 Sobrevivente"
     if nivel < 50: return "🛡️ Veterano"
     if nivel < 80: return "⚔️ Elite"
     return "👑 Lenda do Oblivion"
 
-class XPSystem(commands.Cog):
+class SistemaDeExperiencia(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.cooldowns = {}
@@ -44,10 +44,10 @@ class XPSystem(commands.Cog):
         with open(PATH_PLAYERS, "w", encoding="utf-8") as f:
             json.dump(self.dados, f, indent=4)
 
-    def check_mult(self, member, p_data):
+    def calcular_mult(self, member, p_data):
         mult = 1.0
         roles_ids = [r.id for r in member.roles]
-        if any(rid in CARGOS_VIPS.values() for rid in roles_ids) or member.guild_permissions.administrator:
+        if any(rid in CARGOS_VIPS_XP.values() for rid in roles_ids) or member.guild_permissions.administrator:
             mult = 2.0
         
         prestigio = p_data.get("prestigio", 0)
@@ -76,7 +76,7 @@ class XPSystem(commands.Cog):
             self.dados[uid] = {"xp": 0, "nivel": 1, "prestigio": 0, "notificar_lvl": True}
 
         p = self.dados[uid]
-        mult = self.check_mult(message.author, p)
+        mult = self.calcular_mult(message.author, p)
         
         xp_ganho = random.randint(15, 25) * mult
         p["xp"] = p.get("xp", 0) + xp_ganho
@@ -90,21 +90,21 @@ class XPSystem(commands.Cog):
             p["nivel"] = nivel_atual + 1
             
             if p.get("notificar_lvl", True):
-                embed = discord.Embed(
-                    title="🎊 NOVO NÍVEL ALCANÇADO",
-                    description=f"{message.author.mention} subiu para o **Nível {p['nivel']}**!\nAgora és um **{get_rank_name(p['nivel'])}**.",
+                emb = discord.Embed(
+                    title="🎊 NOVO NÍVEL!",
+                    description=f"{message.author.mention} subiu para o **Nível {p['nivel']}**!\nPatente: **{pegar_rank(p['nivel'])}**.",
                     color=COR_XP
                 )
-                embed.set_thumbnail(url=message.author.display_avatar.url)
+                emb.set_thumbnail(url=message.author.display_avatar.url)
                 try:
-                    await message.channel.send(embed=embed, delete_after=20)
+                    await message.channel.send(embed=emb, delete_after=20)
                 except: pass
 
-    @app_commands.command(name="prestigio", description="Reseta o teu nível para ganhar bónus permanente de XP.")
+    @app_commands.command(name="prestigio", description="Reseta o nível para bónus de XP.")
     async def prestigiar(self, it: discord.Interaction):
         uid = str(it.user.id)
         if uid not in self.dados or self.dados[uid].get("nivel", 1) < 100:
-            return await it.response.send_message("❌ Precisas de atingir o **Nível 100** para subir de Prestígio!", ephemeral=True)
+            return await it.response.send_message("❌ Precisas de **Nível 100**!", ephemeral=True)
 
         p = self.dados[uid]
         p["nivel"] = 1
@@ -113,4 +113,4 @@ class XPSystem(commands.Cog):
         await it.response.send_message(f"⭐ **ASCENSÃO!** {it.user.mention} agora é Prestígio {p['prestigio']}!")
 
 async def setup(bot):
-    await bot.add_cog(XPSystem(bot))
+    await bot.add_cog(SistemaDeExperiencia(bot))
