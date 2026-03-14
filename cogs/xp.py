@@ -87,7 +87,6 @@ class XPSystem(commands.Cog):
             p["nivel"] = nivel_atual + 1
             p["xp"] = 0
             
-            # Notificação Profissional
             if p.get("notificar_lvl", True):
                 embed = discord.Embed(
                     title="🎊 NOVO NÍVEL ALCANÇADO",
@@ -123,19 +122,7 @@ class XPSystem(commands.Cog):
         )
         await it.response.send_message(embed=embed)
 
-    @app_commands.command(name="notificacoes", description="Ativa ou desativa avisos de Level Up no chat.")
-    async def toggle_notif(self, it: discord.Interaction):
-        dados = self.carregar_dados()
-        uid = str(it.user.id)
-        if uid not in dados: return await it.response.send_message("Perfil não encontrado.", ephemeral=True)
-        
-        atual = dados[uid].get("notificar_lvl", True)
-        dados[uid]["notificar_lvl"] = not atual
-        self.guardar_dados(dados)
-        
-        status = "ATIVADAS" if not atual else "DESATIVADAS"
-        await it.response.send_message(f"🔔 As tuas notificações de nível foram **{status}**.", ephemeral=True)
+# --- IMPORTANTE: FORA DA CLASSE E SEM INDENTAÇÃO ---
 
-# --- ESTA FUNÇÃO TEM DE ESTAR FORA DA CLASSE (SEM ESPAÇOS À ESQUERDA) ---
 async def setup(bot):
     await bot.add_cog(XPSystem(bot))
