@@ -1,18 +1,16 @@
 import discord
 import os
 import asyncio
-import random  # <-- MOVIDO PARA O TOPO (BOA PRÁTICA)
+import random
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 from itertools import cycle
 
-# Assume que os teus ficheiros estão na pasta /cogs
-from cogs.recompensas import DailyView 
+# REMOVIDO O IMPORT DA DAILYVIEW DO TOPO PARA EVITAR CONFLITOS DE CARREGAMENTO
 
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
 
-# --- STATUS "BONITÕES" E DINÂMICOS ---
 status_frases = cycle([
     "⚔️ Dominando o Oblivion SMP",
     "Nas sombras do vazio...",
@@ -40,16 +38,17 @@ class Theoblivionsmp(commands.Bot):
         # 1. Carregar os Cogs Primeiro
         if os.path.exists('./cogs'):
             for filename in os.listdir('./cogs'):
-                # Ignorar pastas e ficheiros que não sejam .py
                 if filename.endswith('.py') and not filename.startswith('__'):
                     try:
+                        # Carregamento limpo das extensões
                         await self.load_extension(f'cogs.{filename[:-3]}')
                         print(f' ✅ [COG] {filename[:-3].upper()} carregado.')
                     except Exception as e:
                         print(f' ❌ [ERRO] {filename}: {e}')
         
-        # 2. Registar a View Persistente
+        # 2. Registar a View Persistente (Import dinâmico para evitar o erro de setup)
         try:
+            from cogs.recompensas import DailyView
             self.add_view(DailyView(None)) 
             print(" ✅ [VIEW] DailyView persistente ativada.")
         except Exception as e:
@@ -60,16 +59,14 @@ class Theoblivionsmp(commands.Bot):
         print(" ✅ [SLASH] Comandos sincronizados.")
         print("="*30 + "\n")
         
-        # Iniciar a task de status
         self.change_status.start()
 
     @tasks.loop(seconds=20)
     async def change_status(self):
         await self.wait_until_ready()
         
-        membros = sum(g.member_count for g in self.guilds)
+        membros = sum(g.member_count for g in self.guilds if g.member_count)
         
-        # Lógica de status aleatório ou sequencial
         if random.random() < 0.2: 
             status_txt = f"👥 {membros} Sobreviventes"
         else:
@@ -88,6 +85,15 @@ class Theoblivionsmp(commands.Bot):
         print(f'🆔 ID: {self.user.id}')
         print(f'🟢 Status: Totalmente Funcional\n')
 
-# Inicia o bot
+# Inicialização segura
+async def main():
+    async with bot:
+        await bot.start(TOKEN)
+
 bot = Theoblivionsmp()
-bot.run(TOKEN)
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass
