@@ -1,6 +1,7 @@
 import discord
 import os
 import asyncio
+import random  # <-- MOVIDO PARA O TOPO (BOA PRÁTICA)
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 from itertools import cycle
@@ -14,7 +15,7 @@ TOKEN = os.getenv('TOKEN')
 # --- STATUS "BONITÕES" E DINÂMICOS ---
 status_frases = cycle([
     "⚔️ Dominando o Oblivion SMP",
-    "🌌 Nas sombras do vazio...",
+    "Nas sombras do vazio...",
     "🛡️ Protegendo os sobreviventes",
     "💎 Em busca de fragmentos",
     "🔥 XP em dobro no chat!",
@@ -28,7 +29,7 @@ class Theoblivionsmp(commands.Bot):
         intents = discord.Intents.default()
         intents.message_content = True
         intents.members = True
-        intents.presences = True # Ativa se quiseres status mais precisos
+        intents.presences = True 
         super().__init__(command_prefix="!", intents=intents)
 
     async def setup_hook(self):
@@ -37,17 +38,18 @@ class Theoblivionsmp(commands.Bot):
         print("="*30)
         
         # 1. Carregar os Cogs Primeiro
-        for filename in os.listdir('./cogs'):
-            if filename.endswith('.py'):
-                try:
-                    await self.load_extension(f'cogs.{filename[:-3]}')
-                    print(f' ✅ [COG] {filename[:-3].upper()} carregado.')
-                except Exception as e:
-                    print(f' ❌ [ERRO] {filename}: {e}')
+        if os.path.exists('./cogs'):
+            for filename in os.listdir('./cogs'):
+                # Ignorar pastas e ficheiros que não sejam .py
+                if filename.endswith('.py') and not filename.startswith('__'):
+                    try:
+                        await self.load_extension(f'cogs.{filename[:-3]}')
+                        print(f' ✅ [COG] {filename[:-3].upper()} carregado.')
+                    except Exception as e:
+                        print(f' ❌ [ERRO] {filename}: {e}')
         
-        # 2. Registar a View Persistente (Após carregar os cogs)
+        # 2. Registar a View Persistente
         try:
-            # Passamos None porque a View persistente não precisa do Cog instanciado no arranque
             self.add_view(DailyView(None)) 
             print(" ✅ [VIEW] DailyView persistente ativada.")
         except Exception as e:
@@ -61,22 +63,22 @@ class Theoblivionsmp(commands.Bot):
         # Iniciar a task de status
         self.change_status.start()
 
-    @tasks.loop(seconds=20) # Reduzi para 20s para ser mais dinâmico
+    @tasks.loop(seconds=20)
     async def change_status(self):
         await self.wait_until_ready()
         
-        # Podes até mostrar quantos membros o bot está a vigiar
         membros = sum(g.member_count for g in self.guilds)
         
-        status = next(status_frases)
-        # Ocasionalmente mostra o número de players
-        if random.random() < 0.2: # 20% de chance
-            status = f"👥 {membros} Sobreviventes"
+        # Lógica de status aleatório ou sequencial
+        if random.random() < 0.2: 
+            status_txt = f"👥 {membros} Sobreviventes"
+        else:
+            status_txt = next(status_frases)
 
         await self.change_presence(
             activity=discord.Activity(
                 type=discord.ActivityType.watching, 
-                name=status
+                name=status_txt
             ),
             status=discord.Status.online
         )
@@ -87,6 +89,5 @@ class Theoblivionsmp(commands.Bot):
         print(f'🟢 Status: Totalmente Funcional\n')
 
 # Inicia o bot
-import random # Necessário para a lógica do status aleatório
 bot = Theoblivionsmp()
 bot.run(TOKEN)
