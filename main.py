@@ -6,11 +6,11 @@ from discord.ext import commands, tasks
 from dotenv import load_dotenv
 from itertools import cycle
 
-# REMOVIDO O IMPORT DA DAILYVIEW DO TOPO PARA EVITAR CONFLITOS DE CARREGAMENTO
-
+# Carregar variáveis de ambiente
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
 
+# Configuração de Status
 status_frases = cycle([
     "⚔️ Dominando o Oblivion SMP",
     "Nas sombras do vazio...",
@@ -24,6 +24,7 @@ status_frases = cycle([
 
 class Theoblivionsmp(commands.Bot):
     def __init__(self):
+        # Intents necessários para XP e Moderação
         intents = discord.Intents.default()
         intents.message_content = True
         intents.members = True
@@ -35,65 +36,75 @@ class Theoblivionsmp(commands.Bot):
         print("     OBLIVION CORE SYSTEM")
         print("="*30)
         
-        # 1. Carregar os Cogs Primeiro
+        # 1. Carregar Extensões (Cogs)
         if os.path.exists('./cogs'):
             for filename in os.listdir('./cogs'):
                 if filename.endswith('.py') and not filename.startswith('__'):
+                    ext_name = f'cogs.{filename[:-3]}'
                     try:
-                        # Carregamento limpo das extensões
-                        await self.load_extension(f'cogs.{filename[:-3]}')
+                        await self.load_extension(ext_name)
                         print(f' ✅ [COG] {filename[:-3].upper()} carregado.')
                     except Exception as e:
                         print(f' ❌ [ERRO] {filename}: {e}')
         
-        # 2. Registar a View Persistente (Import dinâmico para evitar o erro de setup)
+        # 2. Registar Views Persistentes (Sem crashar se o Cog falhar)
         try:
+            # Import dinâmico dentro da função para evitar erro de circularidade
             from cogs.recompensas import DailyView
             self.add_view(DailyView(None)) 
             print(" ✅ [VIEW] DailyView persistente ativada.")
         except Exception as e:
-            print(f" ⚠ [AVISO] Não foi possível registar DailyView: {e}")
+            print(f" ⚠ [AVISO] DailyView não registada: {e}")
 
-        # 3. Sincronizar Comandos
-        await self.tree.sync()
-        print(" ✅ [SLASH] Comandos sincronizados.")
+        # 3. Sincronizar Comandos Slash
+        try:
+            await self.tree.sync()
+            print(" ✅ [SLASH] Comandos sincronizados.")
+        except Exception as e:
+            print(f" ❌ [ERRO] Falha na sincronização: {e}")
+            
         print("="*30 + "\n")
         
+        # Iniciar o loop de status
         self.change_status.start()
 
     @tasks.loop(seconds=20)
     async def change_status(self):
         await self.wait_until_ready()
         
-        membros = sum(g.member_count for g in self.guilds if g.member_count)
-        
-        if random.random() < 0.2: 
-            status_txt = f"👥 {membros} Sobreviventes"
-        else:
-            status_txt = next(status_frases)
+        # Tenta contar membros de todos os servidores
+        try:
+            membros = sum(g.member_count for g in self.guilds if g.member_count)
+            
+            if random.random() < 0.2: 
+                status_txt = f"👥 {membros} Sobreviventes"
+            else:
+                status_txt = next(status_frases)
 
-        await self.change_presence(
-            activity=discord.Activity(
-                type=discord.ActivityType.watching, 
-                name=status_txt
-            ),
-            status=discord.Status.online
-        )
+            await self.change_presence(
+                activity=discord.Activity(
+                    type=discord.ActivityType.watching, 
+                    name=status_txt
+                ),
+                status=discord.Status.online
+            )
+        except:
+            pass
 
     async def on_ready(self):
         print(f'🚀 SISTEMA OPERACIONAL: {self.user.name}')
         print(f'🆔 ID: {self.user.id}')
         print(f'🟢 Status: Totalmente Funcional\n')
 
-# Inicialização segura
+# Inicialização do Bot
+bot = Theoblivionsmp()
+
 async def main():
     async with bot:
         await bot.start(TOKEN)
-
-bot = Theoblivionsmp()
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        pass
+        print("🛑 Bot desligado manualmente.")
