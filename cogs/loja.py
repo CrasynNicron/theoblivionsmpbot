@@ -181,7 +181,7 @@ class ConfirmacaoCompra(discord.ui.View):
             await interaction.followup.send("❌ Tempo esgotado. Tenta novamente.", ephemeral=True)
 
 # --- COG LOJA ---
-class SistemasUnificados(commands.Cog):
+class LojaSistemas(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -239,4 +239,4 @@ class SistemasUnificados(commands.Cog):
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 async def setup(bot):
-    await bot.add_cog(SistemasUnificados(bot))
+    await bot.add_cog(LojaSistemas(bot))

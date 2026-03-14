@@ -112,6 +112,5 @@ class XPSystem(commands.Cog):
         p["prestigio"] = p.get("prestigio", 0) + 1
         await it.response.send_message(f"⭐ **ASCENSÃO!** {it.user.mention} agora é Prestígio {p['prestigio']}!")
 
-# ESTA FUNÇÃO NÃO PODE TER ESPAÇOS ANTES DELA
 async def setup(bot):
     await bot.add_cog(XPSystem(bot))
