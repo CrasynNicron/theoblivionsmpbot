@@ -1,6 +1,6 @@
 import discord
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks # Adicionado tasks
 import json
 import os
 import random
@@ -29,6 +29,8 @@ class XPSystem(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.cooldowns = {}
+        self.dados = self.carregar_dados()
+        self.salvar_periodicamente.start() # Inicia o salvamento automático
 
     def carregar_dados(self):
         if not os.path.exists(PATH_PLAYERS): return {}
@@ -37,19 +39,25 @@ class XPSystem(commands.Cog):
                 return json.load(f)
         except: return {}
 
-    def guardar_dados(self, dados):
+    @tasks.loop(minutes=5)
+    async def salvar_periodicamente(self):
+        """Salva os dados no arquivo a cada 5 minutos para evitar lag"""
         with open(PATH_PLAYERS, "w", encoding="utf-8") as f:
-            json.dump(dados, f, indent=4)
+            json.dump(self.dados, f, indent=4)
 
     def check_mult(self, member, p_data):
         mult = 1.0
         roles_ids = [r.id for r in member.roles]
+        
+        # Multiplicador VIP ou ADM
         if any(rid in CARGOS_VIPS.values() for rid in roles_ids) or member.guild_permissions.administrator:
             mult = 2.0
         
+        # Bónus de Prestígio (Soma ao multiplicador)
         prestigio = p_data.get("prestigio", 0)
         mult += (prestigio * 0.5)
 
+        # Booster temporário (Multiplica o total)
         if "booster_ate" in p_data:
             try:
                 if datetime.now() < datetime.fromisoformat(p_data["booster_ate"]):
@@ -60,31 +68,36 @@ class XPSystem(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot or not message.guild: return
-        if ID_CARGO_PLAYER not in [r.id for r in message.author.roles]: return
+        
+        # Verifica se tem o cargo necessário para ganhar XP
+        if not any(r.id == ID_CARGO_PLAYER for r in message.author.roles): return
         if len(message.content) < 4: return
 
         uid = str(message.author.id)
         agora = datetime.now()
 
+        # Cooldown de 60 segundos por usuário
         if uid in self.cooldowns and agora < self.cooldowns[uid] + timedelta(seconds=60):
             return
 
-        dados = self.carregar_dados()
-        if uid not in dados: return 
+        # Inicializa jogador se não existir
+        if uid not in self.dados:
+            self.dados[uid] = {"xp": 0, "nivel": 1, "prestigio": 0, "notificar_lvl": True}
 
-        p = dados[uid]
+        p = self.dados[uid]
         mult = self.check_mult(message.author, p)
         
         xp_ganho = random.randint(15, 25) * mult
         p["xp"] = p.get("xp", 0) + xp_ganho
         self.cooldowns[uid] = agora
 
+        # Lógica de Level Up
         nivel_atual = p.get("nivel", 1)
         prox_lvl_xp = nivel_atual * 500
 
         if p["xp"] >= prox_lvl_xp:
+            p["xp"] -= prox_lvl_xp # Subtrai em vez de resetar para 0
             p["nivel"] = nivel_atual + 1
-            p["xp"] = 0
             
             if p.get("notificar_lvl", True):
                 embed = discord.Embed(
@@ -93,23 +106,21 @@ class XPSystem(commands.Cog):
                     color=COR_XP
                 )
                 embed.set_thumbnail(url=message.author.display_avatar.url)
-                await message.channel.send(embed=embed, delete_after=20)
-
-        self.guardar_dados(dados)
+                try:
+                    await message.channel.send(embed=embed, delete_after=20)
+                except: pass
 
     @app_commands.command(name="prestigio", description="Reseta o teu nível para ganhar bónus permanente de XP.")
     async def prestigiar(self, it: discord.Interaction):
-        dados = self.carregar_dados()
         uid = str(it.user.id)
         
-        if uid not in dados or dados[uid].get("nivel", 1) < 100:
+        if uid not in self.dados or self.dados[uid].get("nivel", 1) < 100:
             return await it.response.send_message("❌ Precisas de atingir o **Nível 100** para subir de Prestígio!", ephemeral=True)
 
-        p = dados[uid]
+        p = self.dados[uid]
         p["nivel"] = 1
         p["xp"] = 0
         p["prestigio"] = p.get("prestigio", 0) + 1
-        self.guardar_dados(dados)
 
         await it.response.send_message(f"⭐ **ASCENSÃO!** {it.user.mention} agora é Prestígio {p['prestigio']}!")
 
