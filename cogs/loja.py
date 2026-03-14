@@ -158,15 +158,16 @@ class ConfirmacaoCompra(discord.ui.View):
             if not canal_logs:
                 return await interaction.followup.send("❌ Erro: Canal de logs não encontrado.", ephemeral=True)
 
+            img_name = f"{self.id_pedido}.png"
             img_data = await msg.attachments[0].read()
-            arquivo = discord.File(io.BytesIO(img_data), filename=f"{self.id_pedido}.png")
+            arquivo = discord.File(io.BytesIO(img_data), filename=img_name)
 
             log_emb = discord.Embed(title=f"🔔 NOVO PEDIDO [{self.id_pedido}]", color=COR_ALERTA)
             log_emb.add_field(name="👤 Pagante", value=f"{interaction.user.mention} ({interaction.user.id})")
             log_emb.add_field(name="🎯 Destinatário", value=f"<@{self.alvo_id}>")
             log_emb.add_field(name="💰 Valor Total", value=f"**R$ {self.rs:.2f} | {self.eur:.2f}€**")
             log_emb.add_field(name="📦 Itens Escolhidos", value=f"```\n{', '.join(self.itens)}\n```", inline=False)
-            log_emb.set_image(url=f"attachment://{self.id_pedido}.png")
+            log_emb.set_image(url=f"attachment://{img_name}")
 
             await canal_logs.send(embed=log_emb, file=arquivo, view=PainelAprovacao(self.alvo_id, self.itens, self.id_pedido))
             
@@ -218,11 +219,13 @@ class SistemasUnificados(commands.Cog):
             if vips:
                 v_top = max(vips, key=lambda x: x['r'])
                 final_nomes.append(v_top['n'])
-                tr += v_top['r']; te += v_top['e']
+                tr += v_top['r']
+                te += v_top['e']
             
             for i in outros:
                 final_nomes.append(i['n'])
-                tr += i['r']; te += i['e']
+                tr += i['r']
+                te += i['e']
 
             res_emb = discord.Embed(title="🛒 REVISÃO DO CARRINHO", color=COR_PRINCIPAL)
             res_emb.description = f"**Destinatário:** {alvo.mention}\n**Itens:** `{', '.join(final_nomes)}`"
