@@ -55,7 +55,6 @@ class XPSystem(commands.Cog):
                 if datetime.now() < datetime.fromisoformat(p_data["booster_ate"]):
                     mult *= 2
             except: pass
-        
         return mult
 
     @commands.Cog.listener()
@@ -94,9 +93,6 @@ class XPSystem(commands.Cog):
                     color=COR_XP
                 )
                 embed.set_thumbnail(url=message.author.display_avatar.url)
-                if p.get("prestigio", 0) > 0:
-                    embed.set_footer(text=f"Bónus de Prestígio S{p['prestigio']} ativo! ⭐")
-                
                 await message.channel.send(embed=embed, delete_after=20)
 
         self.guardar_dados(dados)
@@ -115,14 +111,7 @@ class XPSystem(commands.Cog):
         p["prestigio"] = p.get("prestigio", 0) + 1
         self.guardar_dados(dados)
 
-        embed = discord.Embed(
-            title="⭐ ASCENSÃO DE PRESTÍGIO",
-            description=f"Parabéns {it.user.mention}!\n\nAgora és **Prestígio {p['prestigio']}**.\nO teu multiplicador base aumentou em **+0.5x** para sempre!",
-            color=discord.Color.gold()
-        )
-        await it.response.send_message(embed=embed)
-
-# --- IMPORTANTE: FORA DA CLASSE E SEM INDENTAÇÃO ---
+        await it.response.send_message(f"⭐ **ASCENSÃO!** {it.user.mention} agora é Prestígio {p['prestigio']}!")
 
 async def setup(bot):
     await bot.add_cog(XPSystem(bot))
