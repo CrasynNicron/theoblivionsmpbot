@@ -11,4 +11,4 @@ class SistemaNiveis(commands.Cog):
         await interaction.response.send_message("✅ Sistema de Níveis carregado com sucesso!")
 
 async def setup(bot):
-    await bot.add_cog(SistemaNiveis(bot))
+    await bot.add_cog(SistemaNiveis(bot)
