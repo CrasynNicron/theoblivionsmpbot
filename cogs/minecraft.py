@@ -64,7 +64,7 @@ class SistemasUnificados(commands.Cog):
         # Detalhe extra: Link direto para a skin plana (textura)
         embed.add_field(name="🖼️ Textura", value=f"[Ver Skin Plana](https://mc-heads.net/skin/{uuid})", inline=False)
         
-        embed.set_footer(text="Oblivion SMP • mc-heads.net", icon_url="https://static.wikia.nocookie.net/minecraft_gamepedia/images/2/2d/Grass_Block_JE2.png")
+        embed.set_footer(text="The Oblivion SMP", icon_url="https://cdn.discordapp.com/icons/1133021777547767949/a_6714d22f0fa7b8e0faf02468456ae843.gif?size=2048.gif")
 
         # 3. Botões interativos
         view = discord.ui.View()
